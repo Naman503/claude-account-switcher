@@ -262,16 +262,71 @@ func TestSpendWeekly(t *testing.T) {
 func TestUsageTextShowsWeeklyReset(t *testing.T) {
 	now := time.Date(2026, 10, 6, 12, 0, 0, 0, time.Local)
 	a := Account{Usage: &Usage{Session: 20, Weekly: 40, WeeklyReset: now.Add(2 * 24 * time.Hour)}}
-	if got, want := usageText(a, 96, now), "5h 20% · week 40%, resets Thu 12:00"; got != want {
+	if got, want := usageText(a, 96, now), "5h 20% · week 40%, resets Thu 12:00 PM"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 	a.Usage.Weekly = 97
-	if got, want := usageText(a, 96, now), "5h 20% · week 97% until Thu 12:00"; got != want {
+	if got, want := usageText(a, 96, now), "5h 20% · week 97% until Thu 12:00 PM"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 	a.Usage.Weekly, a.Usage.WeeklyReset = 0, now.Add(6*24*time.Hour+time.Hour)
-	if got, want := usageText(a, 96, now), "5h 20% · week 0%, resets Mon 12 Oct 13:00"; got != want {
+	if got, want := usageText(a, 96, now), "5h 20% · week 0%, resets Mon 12 Oct 1:00 PM"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestUsageTextShowsSessionResetBelowThreshold(t *testing.T) {
+	now := time.Date(2026, 10, 25, 19, 10, 0, 0, time.Local)
+	for _, pct := range []float64{0, 1, 96, 100} {
+		a := Account{Usage: &Usage{Session: pct, SessionReset: now.Add(2*time.Hour + 10*time.Minute)}}
+		want := "5h " + jsonInt(int64(pct)) + "%, resets in 2h 10m (9:20 PM) · week 0%"
+		if got := usageText(a, 98, now); got != want {
+			t.Fatalf("session %.0f: got %q, want %q", pct, got, want)
+		}
+	}
+	// Expired cached usage must not keep an old countdown or used percentage.
+	a := Account{Usage: &Usage{Session: 100, SessionReset: now.Add(-time.Minute)}}
+	if got, want := usageText(a, 98, now), "5h 0% · week 0%"; got != want {
+		t.Fatalf("expired reset: got %q, want %q", got, want)
+	}
+}
+
+func TestResetCountdown(t *testing.T) {
+	now := time.Now()
+	for _, tc := range []struct {
+		remaining time.Duration
+		want      string
+	}{
+		{time.Second, "1m"},
+		{59 * time.Second, "1m"},
+		{time.Minute, "1m"},
+		{time.Minute + time.Second, "2m"},
+		{59*time.Minute + time.Second, "1h"},
+		{time.Hour, "1h"},
+		{time.Hour + time.Second, "1h 1m"},
+		{5 * time.Hour, "5h"},
+	} {
+		if got := resetCountdown(now.Add(tc.remaining), now); got != tc.want {
+			t.Errorf("%s: got %q, want %q", tc.remaining, got, tc.want)
+		}
+	}
+}
+
+func TestResetTextUses12HourClock(t *testing.T) {
+	now := time.Date(2026, 10, 25, 0, 0, 0, 0, time.Local)
+	for _, tc := range []struct {
+		after time.Duration
+		want  string
+	}{
+		{0, "12:00 AM"},
+		{12 * time.Hour, "12:00 PM"},
+		{19*time.Hour + 30*time.Minute, "7:30 PM"},
+		{24 * time.Hour, "Mon 12:00 AM"},
+		{7*24*time.Hour + 4*time.Hour + 29*time.Minute, "Sun 1 Nov 4:29 AM"},
+	} {
+		if got := resetText(now.Add(tc.after), now); got != tc.want {
+			t.Errorf("%s: got %q, want %q", tc.after, got, tc.want)
+		}
 	}
 }
 
@@ -324,11 +379,11 @@ func TestAutoNote(t *testing.T) {
 		t.Fatalf("note after a switch by hand: %q", got)
 	}
 	s.st.LastCause, s.st.LastFrom = nearlyFull, "a"
-	if got, want := s.autoNote(now), "Auto-switched at 03:00, Pepe (Pro) was nearly full"; got != want {
+	if got, want := s.autoNote(now), "Auto-switched at 3:00 AM, Pepe (Pro) was nearly full"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 	s.st.LastCause, s.st.SpendUntil = spendWeekly, now.Add(9*time.Hour)
-	if got, want := s.autoNote(now), "Auto-switched at 03:00 to use up this account's week before it resets 18:00"; got != want {
+	if got, want := s.autoNote(now), "Auto-switched at 3:00 AM to use up this account's week before it resets 6:00 PM"; got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
 	s.st.LastSwitch = now.Add(-noteFor - time.Minute)

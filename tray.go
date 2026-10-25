@@ -231,8 +231,8 @@ func usageText(a Account, threshold float64, now time.Time) string {
 	}
 	u := a.Usage.current(now)
 	parts := []string{fmt.Sprintf("5h %.0f%%", u.Session), fmt.Sprintf("week %.0f%%", u.Weekly)}
-	if u.Session >= threshold && !u.SessionReset.IsZero() {
-		parts[0] += " until " + resetText(u.SessionReset, now)
+	if !u.SessionReset.IsZero() && u.SessionReset.After(now) {
+		parts[0] += ", resets in " + resetCountdown(u.SessionReset, now) + " (" + resetText(u.SessionReset, now) + ")"
 	}
 	// The weekly reset is always shown: it decides how much of the week is left to use.
 	switch {
@@ -245,16 +245,32 @@ func usageText(a Account, threshold float64, now time.Time) string {
 	return strings.Join(parts, " · ")
 }
 
+// Round up to the next minute so a pending reset never reads as zero minutes.
+func resetCountdown(at, now time.Time) string {
+	remaining := at.Sub(now)
+	minutes := int(remaining / time.Minute)
+	if remaining%time.Minute > 0 {
+		minutes++
+	}
+	if minutes < 60 {
+		return fmt.Sprintf("%dm", minutes)
+	}
+	if minutes%60 == 0 {
+		return fmt.Sprintf("%dh", minutes/60)
+	}
+	return fmt.Sprintf("%dh %dm", minutes/60, minutes%60)
+}
+
 func resetText(at, now time.Time) string {
 	at, now = at.Local(), now.Local()
 	switch {
 	case at.YearDay() == now.YearDay() && at.Year() == now.Year():
-		return at.Format("15:04")
+		return at.Format("3:04 PM")
 	case at.Sub(now) < 6*24*time.Hour:
-		return at.Format("Mon 15:04")
+		return at.Format("Mon 3:04 PM")
 	}
 	// A weekday alone would read as today for a reset a week out.
-	return at.Format("Mon 2 Jan 15:04")
+	return at.Format("Mon 2 Jan 3:04 PM")
 }
 
 func (t *tray) setIcon(pct, threshold float64) {
