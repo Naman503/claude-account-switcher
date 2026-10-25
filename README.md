@@ -46,6 +46,10 @@ Three of those four steps are pure overhead, and the fourth is a guess.
 
 **Shows usage for all accounts at once.** 5-hour and weekly usage for every saved account, live, with when each weekly limit resets. Whenever a future 5-hour reset is reported, its countdown and reset time are shown, even below the switch threshold. Times use a 12-hour clock in your local timezone. The tray icon is a ring that fills with the active account's 5-hour usage: green, orange from 75%, red at your switch threshold.
 
+![Before and after the reset-display improvement](assets/usage-reset-display.png)
+
+*Text comparison with sample values; native menu appearance varies by platform.*
+
 **Can switch on its own.** Off by default. Turn it on and the switcher moves Claude to the account with the most room left once the active one passes 96% (or 90, 94, 98, your choice). A second toggle moves it to an account whose weekly limit is about to reset mostly unused, so that usage is not lost.
 
 ## Measured
