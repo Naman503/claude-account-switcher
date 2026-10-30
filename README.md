@@ -44,11 +44,7 @@ Three of those four steps are pure overhead, and the fourth is a guess.
 
 **Brings your chats along.** Before Claude starts, the switcher copies the chat list entries of your other accounts into the one you switch to. Open the chat you were in and keep going. Projects come along too, so chats stay grouped in them. Chats you deleted stay deleted.
 
-**Shows usage for all accounts at once.** 5-hour and weekly usage for every saved account, live, with when each weekly limit resets. Whenever a future 5-hour reset is reported, its countdown and reset time are shown, even below the switch threshold. Times use a 12-hour clock in your local timezone. The tray icon is a ring that fills with the active account's 5-hour usage: green, orange from 75%, red at your switch threshold.
-
-![Before and after the reset-display improvement](assets/usage-reset-display.png)
-
-*Text comparison with sample values; native menu appearance varies by platform.*
+**Shows usage for all accounts at once.** 5-hour and weekly usage for every saved account, live, with when each limit resets. A future 5-hour reset is shown even below the switch threshold, for example `5h 20%, resets 21:20`. At or above the threshold it reads `5h 98% until 21:20`. Times use a 24-hour clock in your local timezone. The tray icon is a ring that fills with the active account's 5-hour usage: green, orange from 75%, red at your switch threshold.
 
 **Can switch on its own.** Off by default. Turn it on and the switcher moves Claude to the account with the most room left once the active one passes 96% (or 90, 94, 98, your choice). A second toggle moves it to an account whose weekly limit is about to reset mostly unused, so that usage is not lost.
 
@@ -145,7 +141,7 @@ The freshness, cooldown and "Claude is running" rules above apply too. When seve
 
 Once it has moved to an account, it keeps using that week until the reset, even after more than half of it is used. If that account's 5-hour limit fills up and the normal auto-switch moves away, it comes back once the 5-hour window resets. Switching by hand ends this.
 
-After any automatic switch, from either toggle, the top of the menu says why for 12 hours, for example "Auto-switched at 3:12 AM to use up this account's week before it resets 6:00 PM".
+After any automatic switch, from either toggle, the top of the menu says why for 12 hours, for example "Auto-switched at 03:12 to use up this account's week before it resets 18:00".
 
 </details>
 
