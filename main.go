@@ -16,9 +16,13 @@ import (
 	"fyne.io/systray"
 )
 
-const version = "0.3.3"
+const version = "0.3.6"
 
 func main() {
+	// The dialog process started by askInDialogProcess.
+	if len(os.Args) == 2 && os.Args[1] == resumeFlag {
+		os.Exit(runResumeDialog())
+	}
 	status := flag.Bool("status", false, "print accounts and usage, then exit")
 	flag.Parse()
 
